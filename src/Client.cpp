@@ -1,34 +1,90 @@
 #include "ft_irc.hpp"
 #include "Replies.hpp"
 
+/**
+ * @brief Constructs a Client instance representing a user connected to the server.
+ * 
+ *  Initializes the client with a server pointer, file descriptor, hostname, port,
+ *  sets the correct password flag to false, and stores the server pointer.
+ * 
+ * @param server Pointer to the server instance managing the client.
+ * @param fd File descriptor associated with the client's connection.
+ * @param hostname The hostname of the client.
+ * @param port The port number through which the client is connected.
+ */
 Client::Client(Server *server, int fd, std::string const &hostname, int port)
-					: _fd(fd), _hostname(hostname), _port(port), _correct_password(false), _server(server){}
+	: _fd(fd), _hostname(hostname), _port(port), _correct_password(false), _server(server) {}
+
+/**
+ * @brief Destructor for the Client class.
+ */
 Client::~Client() {}
 
-void	Client::write(const std::string &message) const
+/**
+ * @brief  Sends a message to the client by calling the server's send function with the message
+ * and the client's file descriptor.
+ * 
+ * @param message The message to be sent to the client.
+ */
+void Client::write(const std::string &message) const
 {
 	this->_server->send(message, this->getFD());
 }
 
+/**
+ * @brief  Constructs and returns the client's prefix string.
+ * If the nickname is empty, returns "*".
+ * Otherwise, returns a string in the form "nickname!username@hostname",
+ * omitting parts if username or hostname are empty.
+ * 
+ * @return std::string The constructed prefix.
+ */
 std::string Client::getPrefix() const
 {
 	if (this->getNickName().empty())
-		return ("*");
+		return "*";
 	return _nickname + (_username.empty() ? "" : "!" + _username) + (_hostname.empty() ? "" : "@" + _hostname);
 }
 
-bool	Client::isRegistered() const
+/**
+ * @brief Checks if the client is fully registered in the server.
+ * 
+ * A client is considered registered if they have a nickname, username, real name,
+ * and have provided the correct password.
+ * 
+ * @return true If the client meets the registration requirements.
+ * @return false Otherwise.
+ */
+bool Client::isRegistered() const
 {
-	if (!this->getNickName().empty() && !this->getUserName().empty() && !this->getRealName().empty() && this->_correct_password)
-		return (true);
-	return (false);
+	return !this->getNickName().empty() && 
+	       !this->getUserName().empty() && 
+	       !this->getRealName().empty() && 
+	       this->_correct_password;
 }
 
-void	Client::reply(const std::string &reply) {
+/**
+ * @brief Sends a server-formatted reply to the client.
+ * 
+ * @param reply The message to be sent as a reply.
+ */
+void Client::reply(const std::string &reply)
+{
 	this->write(":" + this->_server->getServerName() + " " + reply);
 }
 
-void	Client::join(Channel *chan)
+/**
+ * @brief  Handles the client joining a channel.
+ * 1. Adds the client to the channel.
+ * 2. Stores the channel in the client's list of channels.
+ * 3. If the channel was empty before joining, sets the client as the channel admin and operator.
+ * 4. Constructs a string of all nicknames in the channel.
+ * 5. Broadcasts a join message to the channel and sends back replies regarding the join,
+ *    topic status, and list of names.
+ * 
+ * @param chan Pointer to the channel the client is joining.
+ */
+void Client::join(Channel *chan)
 {
 	chan->addClient(this);
 	_user_chans.push_back(chan);
@@ -38,6 +94,7 @@ void	Client::join(Channel *chan)
 		chan->setAdmin(this);
 		chan->addOper(this);
 	}
+
 	std::string users;
 	std::vector<std::string> nicknames = chan->getNickNames();
 	for (std::vector<std::string>::iterator it = nicknames.begin(); it != nicknames.end(); it++)
@@ -50,7 +107,17 @@ void	Client::join(Channel *chan)
 	reply(RPL_ENDOFNAMES(this->getNickName(), chan->getName()));
 }
 
-void 	Client::leave(Channel *chan, int kicked, std::string &reason)
+/**
+ * @brief Handles the client leaving a channel.
+ * 
+ * The client is removed from the channel's list of users. If the client is being
+ * kicked, the reason is provided. Otherwise, the client leaves voluntarily.
+ * 
+ * @param chan Pointer to the channel the client is leaving.
+ * @param kicked Indicates if the client is being forcibly removed (1) or leaving voluntarily (0).
+ * @param reason The reason for leaving, used if the client is not kicked.
+ */
+void Client::leave(Channel *chan, int kicked, std::string &reason)
 {
 	if (!_user_chans.empty())
 		_user_chans.erase(this->_user_chans.begin() + this->_channelIndex(chan));
@@ -58,16 +125,29 @@ void 	Client::leave(Channel *chan, int kicked, std::string &reason)
 		chan->removeClient(this, reason);
 }
 
-void	Client::welcome()
+/**
+ * @brief Sends a welcome message to the client upon successful registration.
+ * 
+ *  If the client is not registered, the function returns immediately.
+ * Otherwise, it sends the following replies:
+ *  - A welcome message with the client's nickname and prefix.
+ *  - Host information with the server's name and version.
+ *  - Server creation time.
+ *  - Server information and supported features.
+ *  - A Message of the Day (MOTD) header, the MOTD text, several lines of ASCII art,
+ *    and an end-of-MOTD message.
+ */
+void Client::welcome()
 {
 	if (!this->isRegistered())
-		return ;
+		return;
+
 	reply(RPL_WELCOME(this->getNickName(), this->getPrefix()));
 	reply(RPL_YOURHOST(this->getNickName(), this->_server->getServerName(), "0.1"));
 	reply(RPL_CREATED(this->getNickName(), this->_server->getStartTime()));
-	reply(RPL_MYINFO(this->getNickName(), this->_server->getServerName(), "0.1", "aiorsw", "IObeiklmnopstv"));
+	reply(RPL_MYINFO(this->getNickName(), this->_server->getServerName(), "0.1", "default", "iklo"));
 
-	// TODO: faire des fonction RPL
+	// TODO: Make a MOTD funtion(?).
 	reply("375 " + this->getNickName() + " :- " + this->_server->getServerName() + " Message of the day -");
 	reply("372 " + this->getNickName() + " :- Welcome to our IRC server!");
 
@@ -77,7 +157,7 @@ void	Client::welcome()
 	reply("372 " + this->getNickName() + " :-  ,8' ,8'                    ,gPPR888888888888");
 	reply("372 " + this->getNickName() + " :- ,8' ,8'                 ,ad8\"\"   `Y888888888P");
 	reply("372 " + this->getNickName() + " :- 8)  8)              ,ad8\"\"        (8888888\"\"");
-	reply("372 " + this->getNickName() + " :- 8,  8,          ,ad8\"\"            d888""");
+	reply("372 " + this->getNickName() + " :- 8,  8,          ,ad8\"\"            d888\"\"");
 	reply("372 " + this->getNickName() + " :- `8, `8,     ,ad8\"\"            ,ad8\"\"");
 	reply("372 " + this->getNickName() + " :-  `8, `\" ,ad8\"\"            ,ad8\"\"");
 	reply("372 " + this->getNickName() + " :-     ,gPPR8b           ,ad8\"\"");
@@ -89,7 +169,13 @@ void	Client::welcome()
 	reply("376 " + this->getNickName() + " :End of MOTD command");
 }
 
-unsigned long	Client::_channelIndex(Channel *channel)
+/**
+ * @brief Finds the index of a given channel in the client's list of joined channels.
+ * 
+ * @param channel Pointer to the channel being searched.
+ * @return unsigned long The index of the channel in the vector, or 0 if not found.
+ */
+unsigned long Client::_channelIndex(Channel *channel)
 {
 	unsigned long i = 0;
 	std::vector<Channel *>::iterator it = this->_user_chans.begin();
@@ -103,9 +189,3 @@ unsigned long	Client::_channelIndex(Channel *channel)
 	}
 	return 0;
 }
-
-
-
-
-
-
