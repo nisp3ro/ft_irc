@@ -172,3 +172,6 @@ Mode changes are processed via the MODE command and immediately broadcast to all
 ### Conclusion
 
 This IRC server is a comprehensive implementation that adheres to the IRC protocol. Its modular design—built on a robust command handler system and non-blocking I/O—ensures efficient connection management, command processing, and channel interactions. The inclusion of the TOPIC command and topic restriction mode (+t / -t) further enhances channel management by controlling who can change a channel's topic. Extensive documentation (using Doxygen style) throughout the codebase makes it easier to understand, maintain, and extend the server's functionality. This summary provides a complete guide to understanding the overall workflow, supported commands, channel modes, and practical usage of the server, even for someone encountering the code for the first time.
+
+(Tested with Irssi v1.2.3 client.)
+
