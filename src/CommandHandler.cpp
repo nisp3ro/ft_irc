@@ -25,6 +25,7 @@ CommandHandler::CommandHandler(Server *server) : _server(server)
 	_commands["NOTICE"] = new NoticeCommand(_server);
 	_commands["WHO"] = new WhoCommand(_server);
 	_commands["LIST"] = new ListCommand(_server);
+	_commands["TOPIC"] = new TopicCommand(_server);
 }
 
 /**

@@ -1,6 +1,6 @@
 ## Advanced Summary of This IRC Server
 
-This IRC server is implemented in C++ following the standard IRC protocol. It is designed to handle multiple client connections over IPv6 using non-blocking sockets and the `poll()` system call, ensuring efficient management of numerous simultaneous connections. The server’s architecture is highly modular, with each command (such as NICK, USER, JOIN, MODE, etc.) encapsulated in its own class derived from a common base `Command` class, which simplifies extension and maintenance.
+This IRC server is implemented in C++ following the standard IRC protocol. It is designed to handle multiple client connections over IPv6 using non-blocking sockets and the `poll()` system call, ensuring efficient management of numerous simultaneous connections. The server’s architecture is highly modular, with each command (such as PASS, NICK, USER, JOIN, MODE, TOPIC, etc.) encapsulated in its own class derived from a common base `Command` class, which simplifies extension and maintenance.
 
 ---
 
@@ -28,7 +28,7 @@ This IRC server is implemented in C++ following the standard IRC protocol. It is
    - **Receiving Data:**  
      The server reads data from client sockets in a non-blocking manner. Data is buffered until a complete command (terminated by a newline) is received; incomplete messages are stored until additional data arrives.
    - **Command Parsing and Execution:**  
-     Incoming messages are parsed into individual commands. The `CommandHandler` class maintains a mapping between command names (e.g., PASS, NICK, USER, JOIN, PART, MODE, KICK, PRIVMSG, NOTICE, WHO, LIST) and their corresponding command objects. It then validates the parameters, checks registration and permissions when necessary, and finally executes the command using the appropriate `execute()` method.
+     Incoming messages are parsed into individual commands. The `CommandHandler` class maintains a mapping between command names (e.g., PASS, NICK, USER, JOIN, PART, MODE, TOPIC, KICK, PRIVMSG, NOTICE, WHO, LIST) and their corresponding command objects. It then validates the parameters, checks registration and permissions when necessary, and finally executes the command using the appropriate `execute()` method.
 
 ---
 
@@ -61,8 +61,12 @@ This IRC server is implemented in C++ following the standard IRC protocol. It is
   - **l:** Set or remove a user limit.
   - **k:** Set or remove a channel password.
   - **o:** Grant or revoke operator privileges.
+  - **t:** Set or remove topic restriction. When topic restriction (mode +t) is active, only the channel admin or operators can change the channel topic.
   
   Mode changes are broadcast to all channel members so that everyone is informed of the updated channel configuration.
+
+- **TOPIC:**  
+  Allows querying or setting the topic of a channel. When issued with just the channel name, it returns the current topic (or indicates that no topic is set). When a new topic is provided (prefixed with a colon), the command verifies, if necessary, that the client has the privileges to change the topic (if the channel is topic-restricted), updates the topic, and broadcasts the change.
 
 - **KICK:**  
   Removes a user from a channel. This command checks that the requester has the necessary privileges (admin or operator) before kicking a user, and it allows specifying a reason for the kick.
@@ -99,6 +103,9 @@ This IRC server supports several channel modes to provide flexible control over 
   
 - **Operator Mode (`o`):**  
   Designates certain users as channel operators, granting them the ability to manage channel settings and user privileges.
+  
+- **Topic Restriction Mode (`t`):**  
+  When active, only the channel admin or operators can change the channel topic. This is enforced by the TOPIC command, which checks the topic restriction flag before allowing a topic change.
 
 Mode changes are processed via the MODE command and immediately broadcast to all members of the channel.
 
@@ -113,7 +120,7 @@ Mode changes are processed via the MODE command and immediately broadcast to all
    Each command received from a client is parsed by the `CommandHandler`, which then delegates execution to the appropriate command object. This modular approach allows for easy extension and customization of the server’s functionality.
 
 3. **Channel Interaction:**  
-   Clients can join channels, part from them, change channel modes, and interact with other users via commands such as PRIVMSG and NOTICE. Channel membership and modes are maintained by the server, and updates are broadcast to all channel members.
+   Clients can join channels, part from them, change channel modes (including topic restrictions), and interact with other users via commands such as PRIVMSG and NOTICE. Channel membership and modes are maintained by the server, and updates are broadcast to all channel members.
 
 4. **Graceful Shutdown and Maintenance:**  
    Signal handling ensures that the server can shut down gracefully, notifying clients appropriately. Debug mode can be toggled to assist with troubleshooting.
@@ -135,7 +142,12 @@ Mode changes are processed via the MODE command and immediately broadcast to all
 - **Channel Operations:**  
   - **JOIN <channel> [<password>]** – Join or create a channel.
   - **PART <channel> [<reason>]** – Leave a channel.
-  - **MODE <channel> <modes> [<parameters>]** – Change channel modes (e.g., invite-only, user limit, password, operator privileges).
+  - **MODE <channel> <modes> [<parameters>]** – Change channel modes. For example:
+    - **+i** or **-i**: Enable or disable invite-only mode.
+    - **+l <limit>** or **-l**: Set or remove the user limit.
+    - **+k <key>** or **-k**: Set or remove the channel password.
+    - **+o <nick>** or **-o <nick>**: Grant or revoke operator privileges.
+    - **+t** or **-t**: Enable or disable topic restriction (only operators/admin can change the topic when enabled).
   - **KICK <channel> <user> [<reason>]** – Remove a user from a channel.
   - **INVITE <user> <channel>** – Invite a user to a channel.
 
@@ -147,6 +159,10 @@ Mode changes are processed via the MODE command and immediately broadcast to all
   - **WHO [<channel>]** – List users on the server or in a specific channel.
   - **LIST [<channel1,channel2,...>]** – List available channels along with details.
 
+- **Topic Management:**  
+  - **TOPIC <channel>** – Query the current topic of a channel.
+  - **TOPIC <channel> :<new topic>** – Set a new topic for a channel. If the channel is topic-restricted (mode +t), only the channel admin or operators can change the topic.
+
 - **Keep-Alive and Disconnection:**  
   - **PING/PONG** commands maintain the connection.
   - **QUIT [<reason>]** disconnects the client from the server.
@@ -155,4 +171,4 @@ Mode changes are processed via the MODE command and immediately broadcast to all
 
 ### Conclusion
 
-This IRC server is a comprehensive implementation that adheres to the IRC protocol. Its modular design, based on a robust command handler system and non-blocking I/O, ensures efficient connection management, command processing, and channel interactions. The extensive documentation (using Doxygen style) throughout the codebase makes it easy to understand, maintain, and extend the functionality of the server. This summary serves as a guide to understand the overall workflow, supported commands, channel modes, and practical usage of the server, even for someone encountering the code for the first time.
+This IRC server is a comprehensive implementation that adheres to the IRC protocol. Its modular design—built on a robust command handler system and non-blocking I/O—ensures efficient connection management, command processing, and channel interactions. The inclusion of the TOPIC command and topic restriction mode (+t / -t) further enhances channel management by controlling who can change a channel's topic. Extensive documentation (using Doxygen style) throughout the codebase makes it easier to understand, maintain, and extend the server's functionality. This summary provides a complete guide to understanding the overall workflow, supported commands, channel modes, and practical usage of the server, even for someone encountering the code for the first time.

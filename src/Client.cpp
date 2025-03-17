@@ -145,7 +145,7 @@ void Client::welcome()
 	reply(RPL_WELCOME(this->getNickName(), this->getPrefix()));
 	reply(RPL_YOURHOST(this->getNickName(), this->_server->getServerName(), "0.1"));
 	reply(RPL_CREATED(this->getNickName(), this->_server->getStartTime()));
-	reply(RPL_MYINFO(this->getNickName(), this->_server->getServerName(), "0.1", "default", "iklo"));
+	reply(RPL_MYINFO(this->getNickName(), this->_server->getServerName(), "0.1", "default", "iklot"));
 
 	// TODO: Make a MOTD funtion(?).
 	reply("375 " + this->getNickName() + " :- " + this->_server->getServerName() + " Message of the day -");

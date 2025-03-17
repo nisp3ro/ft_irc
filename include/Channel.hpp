@@ -13,9 +13,11 @@ private:
 	std::string _name;
 	Client		*_admin;
 
-	int 		_l; //max user in chan
-	bool		_i; //invite-only chan
-	std::string _k; //chan's key(paasword)
+	int 		_l;            // max users in channel
+	bool		_i;            // invite-only channel
+	std::string _k;            // channel's key (password)
+	std::string _topic;        // channel topic
+	bool		_topicRestricted; // if true, only admin/opers can change the topic
 
 	std::vector<Client *> _clients;
 	std::vector<Client *> _oper_clients;
@@ -42,12 +44,21 @@ public:
 	int							getNbrClients() const { return _clients.size(); };
 	std::vector<std::string>	getNickNames();
 
+
+	std::string 				getTopic() const { return _topic; }
+	bool						topicRestricted() const { return _topicRestricted; }
+
+
+
+
 	// SETTERS
 
 	void						setAdmin(Client *client) { _admin = client; };
 	void						setPassword(std::string k) { _k = k; };
 	void						setMaxClients(int l) { _l = l; };
 	void						setInviteOnly(bool active) { this->_i = active; };
+	void						setTopic(const std::string &topic) { _topic = topic; }
+	void						setTopicRestricted(bool restricted) { _topicRestricted = restricted; }
 
 	// OTHER
 

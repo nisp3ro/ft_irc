@@ -158,4 +158,13 @@ public:
 	void execute(Client *client, std::vector<std::string> arguments);
 };
 
+class TopicCommand : public Command
+{
+public:
+	TopicCommand(Server *server);
+	~TopicCommand();
+	
+	void execute(Client *client, std::vector<std::string> arguments);
+};
+
 #endif

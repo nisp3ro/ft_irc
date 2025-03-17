@@ -36,6 +36,8 @@ ModeCommand::~ModeCommand() {}
  *    - 'k': Sets or removes the channel password.
  *    - 'o': Adds or removes a channel operator. For this mode, an additional parameter is expected
  *           specifying the nickname of the client to add or remove as an operator.
+ *    - 't': Sets or removes topic restriction for the channel. When topic restriction is active,
+ *           only the channel admin or operators can change the topic.
  * 5. For each mode change, the function broadcasts a mode change reply (RPL_MODE) to all channel members.
  *
  * @param client Pointer to the Client object issuing the MODE command.
@@ -103,7 +105,7 @@ void ModeCommand::execute(Client *client, std::vector<std::string> arguments)
 				if (!c_tar)
 				{
 					channel->broadcast(ERR_USERNOTINCHANNEL(client->getNickName(), arguments[p], channel->getName()));
-					return ;
+					return;
 				}
 				if (active)
 					channel->addOper(c_tar);
@@ -111,6 +113,14 @@ void ModeCommand::execute(Client *client, std::vector<std::string> arguments)
 					channel->removeOper(c_tar);
 				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+o" : "-o"), (c_tar->getNickName())));
 				p += active ? 1 : 0;
+				break;
+			}
+
+			case 't': {
+				// Set or remove topic restriction.
+				// When topic restriction is active, only the admin or operators can change the topic.
+				channel->setTopicRestricted(active);
+				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+t" : "-t"), ""));
 				break;
 			}
 

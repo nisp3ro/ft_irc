@@ -12,8 +12,12 @@
  * @param admin Pointer to the Client who will be the admin of the channel.
  * @param server Pointer to the Server instance managing this channel.
  */
+// Channel::Channel(std::string const &name, std::string const &password, Client *admin, Server *server)
+// 					: _name(name) , _admin(admin), _l(1000), _i(false), _k(password), _server(server) {}
 Channel::Channel(std::string const &name, std::string const &password, Client *admin, Server *server)
-					: _name(name) , _admin(admin), _l(1000), _i(false), _k(password), _server(server) {}
+ 					: _name(name), _admin(admin), _l(1000), _i(false), _k(password), _topic(""),
+					_topicRestricted(false), _server(server) { }
+
 
 /**
  * @brief Channel destructor.

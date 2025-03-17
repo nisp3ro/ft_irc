@@ -14,7 +14,8 @@ SRCS		=		$(addprefix $(SRC_DIR)/, \
 					Channel.cpp Client.cpp CommandHandler.cpp main.cpp Server.cpp utils.cpp \
                     cmds/InvitCmd.cpp cmds/JoinCmd.cpp cmds/KickCmd.cpp cmds/ListCmd.cpp cmds/ModeCmd.cpp \
                     cmds/NickCmd.cpp cmds/NoticeCmd.cpp cmds/PartCmd.cpp cmds/PassCmd.cpp cmds/PingCmd.cpp \
-                    cmds/PongCmd.cpp cmds/PrivMsgCmd.cpp cmds/QuitCmd.cpp cmds/UserCmd.cpp cmds/WhoCmd.cpp )
+                    cmds/PongCmd.cpp cmds/PrivMsgCmd.cpp cmds/QuitCmd.cpp cmds/UserCmd.cpp cmds/WhoCmd.cpp \
+					cmds/TopicCmd.cpp )
 
 # Objects
 OBJ_DIR		=		obj
