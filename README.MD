@@ -1,3 +1,5 @@
+## ❗❗❗ This repository is currently in development.
+
 ## Advanced Summary of This IRC Server
 
 This IRC server is implemented in C++ following the standard IRC protocol. It is designed to handle multiple client connections over IPv6 using non-blocking sockets and the `poll()` system call, ensuring efficient management of numerous simultaneous connections. The server’s architecture is highly modular, with each command (such as PASS, NICK, USER, JOIN, MODE, TOPIC, etc.) encapsulated in its own class derived from a common base `Command` class, which simplifies extension and maintenance.
