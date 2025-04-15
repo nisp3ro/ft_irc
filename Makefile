@@ -17,6 +17,10 @@ SRCS		=		$(addprefix $(SRC_DIR)/, \
                     cmds/PongCmd.cpp cmds/PrivMsgCmd.cpp cmds/QuitCmd.cpp cmds/UserCmd.cpp cmds/WhoCmd.cpp \
 					cmds/TopicCmd.cpp )
 
+#blinker
+
+BLINK		=		\001\033[1;35;5m\002
+
 # Objects
 OBJ_DIR		=		obj
 OBJS		=		$(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
@@ -40,13 +44,13 @@ all: ascii_art
 
 ascii_art:
 	@if ! $(MAKE) -q $(NAME); then \
-		echo "\n$(LILLY)███████╗████████╗     ██╗██████╗  ██████╗"; \
+		echo "\n$(BLINK))███████╗████████╗     ██╗██████╗  ██████╗"; \
 		echo "██╔════╝╚══██╔══╝     ██║██╔══██╗██╔════╝"; \
 		echo "█████╗     ██║        ██║██████╔╝██║"; \
 		echo "██╔══╝     ██║        ██║██╔══██╗██║"; \
 		echo "██║        ██║███████╗██║██║  ██║╚██████╗"; \
 		echo "╚═╝        ╚═╝╚══════╝╚═╝╚═╝  ╚═╝ ╚═════╝"; \
-		printf "          BY JVIDAL-T , JAINABAS MRUBAL-C\033[0m\n"; \
+		printf "          BY JVIDAL-T , JAINAVAS MRUBAL-C\033[0m\n"; \
 		echo "$(YELLOW)\nCreating program...$(GREEN)"; \
 		i=0; \
 		while [ $$i -lt 20 ]; do \
