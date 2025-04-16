@@ -17,12 +17,12 @@ IRCBot::~IRCBot() {
 }
 
 bool IRCBot::connectToServer() {
-    std::cout << "Conectando a " << server_ip << ":" << server_port << std::endl;
+    std::cout << "Connecting to " << server_ip << ":" << server_port << std::endl;
 
     struct sockaddr_in server_addr;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        std::cerr << "Error creando socket\n";
+        std::cerr << "Socket creation error\n";
         return false;
     }
 
@@ -31,7 +31,7 @@ bool IRCBot::connectToServer() {
     inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr);
 
     if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        std::cerr << "Error conectando al servidor IRC\n";
+        std::cerr << "Error connecting to IRC\n";
         return false;
     }
 
@@ -44,11 +44,14 @@ void IRCBot::sendRaw(std::string msg) {
 }
 
 void IRCBot::joinChannel() {
-    std::cout << "Registrando bot..." << std::endl;
+    std::cout << "Registering bot..." << std::endl;
+
+
     sendRaw("NICK " + nickname);
     sendRaw("USER " + nickname + " 0 * :" + nickname);
-    sendRaw("PASS " + password); // como mierda se mete la pass?
+    sendRaw("PASS " + password);
 
+    bool registered = false;
     char buffer[512];
     while (true) {
         memset(buffer, 0, sizeof(buffer));
@@ -61,14 +64,30 @@ void IRCBot::joinChannel() {
         handlePing(msg);
 
         if (msg.find(" 001 ") != std::string::npos) {
-            std::cout << "Registrado con éxito.\n";
+            std::cout << "Success.\n";
+            registered = true;
+            break;
+        }
+
+        if (msg.find(" 433 ") != std::string::npos) {
+            std::cout << "Nick already in use.\n";
+            break;
+        }
+
+        if (msg.find(" 464 ") != std::string::npos) {
+            std::cout << "Incorrect password.\n";
             break;
         }
     }
 
-    sendRaw("JOIN " + channel);
-    std::cout << "Unido a " << channel << std::endl;
+    if (registered) {
+        sendRaw("JOIN " + channel);
+        std::cout << "Joined to " << channel << std::endl;
+    } else {
+        std::cout << "Error connecting.\n";
+    }
 }
+
 
 void IRCBot::handlePing(const std::string& msg) {
     size_t pos = msg.find("PING :");
@@ -118,3 +137,5 @@ void IRCBot::run() {
 
     close(sockfd);
 }
+
+
