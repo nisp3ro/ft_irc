@@ -45,88 +45,105 @@ ModeCommand::~ModeCommand() {}
  */
 void ModeCommand::execute(Client *client, std::vector<std::string> arguments)
 {
-	if (arguments.size() < 2 || arguments[0].empty() || arguments[1].empty()) {
-		return;
-	}
+    if (arguments.size() < 2 || arguments[0].empty() || arguments[1].empty()) {
+        return;
+    }
 
-	std::string target = arguments.at(0);
+    std::string target = arguments.at(0);
 
-	Channel *channel = _server->getChannel(target);
-	if (!channel)
-	{
-		client->reply(ERR_NOSUCHCHANNEL(client->getNickName(), target));
-		return;
-	}
+    // Retrieve the channel specified by the target argument.
+    Channel *channel = _server->getChannel(target);
+    if (!channel)
+    {
+        client->reply(ERR_NOSUCHCHANNEL(client->getNickName(), target));
+        return;
+    }
 
-	// Check if the client is the channel admin or an operator.
-	if (channel->getAdmin() != client && !channel->is_oper(client))
-	{
-		client->reply(ERR_CHANOPRIVSNEEDED(client->getNickName(), target));
-		return;
-	}
+    // Verify that the client issuing the command is either the channel admin or an operator.
+    if (channel->getAdmin() != client && !channel->is_oper(client))
+    {
+        client->reply(ERR_CHANOPRIVSNEEDED(client->getNickName(), target));
+        return;
+    }
 
-	int i = 0;
-	int p = 2;
-	char c;
+    int i = 0;
+    size_t p = 2;  // 'p' is used to track the argument index for the mode parameters.
+    char c;
 
-	while ((c = arguments[1][i])) {
+    while ((c = arguments[1][i])) {
 
-		char prevC = i > 0 ? arguments[1][i - 1] : '\0';
-		bool active = prevC == '+';
+        char prevC = i > 0 ? arguments[1][i - 1] : '\0';
+        bool active = prevC == '+';  // Determine if the mode is being set (+) or unset (-).
 
-		switch (c) {
+        switch (c) {
 
-			case 'i': {
-				// Toggle invite-only mode.
-				channel->setInviteOnly(active);
-				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+i" : "-i"), ""));
-				break;
-			}
+            case 'i': {
+                // Toggle the invite-only mode for the channel.
+                channel->setInviteOnly(active);
+                channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+i" : "-i"), ""));
+                break;
+            }
 
-			case 'l': {
-				// Set or remove the limit on the maximum number of clients.
-				channel->setMaxClients(active ? std::atoi(arguments[p].c_str()) : 0);
-				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+l" : "-l"), (active ? arguments[p] : "")));
-				p += active ? 1 : 0;
-				break;
-			}
+            case 'l': {
+                // Set or unset the maximum number of clients allowed in the channel.
+                if (active && p < arguments.size()) {
+                    channel->setMaxClients(std::atoi(arguments[p].c_str()));
+                    channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "+l", arguments[p]));
+                    p++;  // If the mode is +l, an additional argument (client limit) is required.
+                } else {
+                    channel->setMaxClients(0);
+                    channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "-l", ""));
+                }
+                break;
+            }
 
-			case 'k': {
-				// Set or remove the channel password.
-				channel->setPassword(active ? arguments[p] : "");
-				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+k" : "-k"), (active ? arguments[p] : "")));
-				p += active ? 1 : 0;
-				break;
-			}
+            case 'k': {
+                // Set or remove the channel password.
+                if (active && p < arguments.size()) {
+                    channel->setPassword(arguments[p]);
+                    channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "+k", arguments[p]));
+                    p++;  // If the mode is +k, an additional argument (password) is required.
+                } else {
+                    channel->setPassword("");
+                    channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "-k", ""));
+                }
+                break;
+            }
 
-			case 'o': {
-				// Add or remove a channel operator.
-				Client *c_tar = channel->getClient(arguments[p]);
-				if (!c_tar)
-				{
-					channel->broadcast(ERR_USERNOTINCHANNEL(client->getNickName(), arguments[p], channel->getName()));
-					return;
-				}
-				if (active)
-					channel->addOper(c_tar);
-				else
-					channel->removeOper(c_tar);
-				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+o" : "-o"), (c_tar->getNickName())));
-				p += active ? 1 : 0;
-				break;
-			}
+            case 'o': {
+                // Add or remove a channel operator.
+                if (p < arguments.size()) {  // Ensure there is an additional argument (nickname).
+                    Client *c_tar = channel->getClient(arguments[p]);
+                    if (!c_tar)
+                    {
+                        channel->broadcast(ERR_USERNOTINCHANNEL(client->getNickName(), arguments[p], channel->getName()));
+                        return;
+                    }
 
-			case 't': {
-				// Set or remove topic restriction.
-				// When topic restriction is active, only the admin or operators can change the topic.
-				channel->setTopicRestricted(active);
-				channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+t" : "-t"), ""));
-				break;
-			}
+                    if (active) {
+                        // If the mode is +o, add the client as a channel operator.
+                        channel->addOper(c_tar);
+                        channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "+o", c_tar->getNickName()));
+                    } else {
+                        // If the mode is -o, remove the client as a channel operator.
+                        channel->removeOper(c_tar);
+                        channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), "-o", c_tar->getNickName()));
+                    }
+                    p++;  // If the mode is +o or -o, an additional argument (nickname) is required.
+                }
+                break;
+            }
 
-			default:
-				break;
-		}
-		i++;
-	}
+            case 't': {
+                // Set or remove the topic restriction mode for the channel.
+                channel->setTopicRestricted(active);
+                channel->broadcast(RPL_MODE(client->getPrefix(), channel->getName(), (active ? "+t" : "-t"), ""));
+                break;
+            }
+
+            default:
+                break;
+        }
+        i++;
+    }
 }
