@@ -50,9 +50,9 @@ private:
 
 public:
 	Server(int port, std::string const &password);
-	// Server(const Server &src);
+	Server(const Server &src);
 	~Server(void);
-	// Server &operator =(const Server &src);
+	Server &operator =(const Server &src);
 
 	// Server
 	void			listen(void);
