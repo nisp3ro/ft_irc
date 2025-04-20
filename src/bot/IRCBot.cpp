@@ -108,7 +108,7 @@ std::string IRCBot::chooseResponse() {
         case 6: return " : I would tell you a UDP joke, but you might not get it.";
         case 7: return " : Debugging: Being the detective in a crime movie where you're also the murderer.";
         case 8: return " : My code doesn't work, I have no idea why. My code works, I have no idea why.";
-        case 9: return " : Segmentation fault (core dumped). que no tonto";
+        case 9: return " : Segmentation fault (core dumped). haha, no";
     }
     return "Null";
 }
