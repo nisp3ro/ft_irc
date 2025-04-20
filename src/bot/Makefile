@@ -1,7 +1,6 @@
 ############################################################################################################
 # Variables
 NAME        = IRCBot
-DEBUG       = 0
 
 # Dependencies
 INCLUDE     = include
@@ -56,7 +55,7 @@ ascii_art:
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	@echo -n "█"
-	@$(CC) $(CFLAGS) -I$(INCLUDE) -D DEBUG=$(DEBUG) -c $< -o $@
+	@$(CC) $(CFLAGS) -I$(INCLUDE) -c $< -o $@
 
 $(NAME): $(OBJS)
 	@printf "$(NC)"
