@@ -4,7 +4,7 @@ INCLUDE     = include
 OBJDIR      = objs
 OBJS        = $(SRCS:%.cpp=$(OBJDIR)/%.o)
 CC          = c++ -Wall -Wextra -Werror -std=c++98
-RM          = rm -f
+RM          = rm -rdf
 
 all: $(NAME)
 
@@ -16,7 +16,7 @@ $(OBJDIR)/%.o: %.cpp
 	$(CC) -I$(INCLUDE) -c $< -o $@
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJDIR)
 
 fclean: clean
 	$(RM) $(NAME)
