@@ -1,12 +1,19 @@
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <cstdlib>
-#include <ctime>
+#ifndef IRCBOT_HPP
+# define IRCBOT_HPP
+
+# include <iostream>
+# include <string>
+# include <cstring>
+# include <unistd.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <sys/socket.h>
+# include <cstdlib>
+# include <ctime>
+# include <cerrno>
+# include <cstdio>
+# include <sys/select.h>
+# include <netdb.h>
 
 class IRCBot {
     private:
@@ -16,12 +23,11 @@ class IRCBot {
         std::string channel;
         int sockfd;
         std::string password;
+        bool running;
 
     public:
-
         IRCBot(std::string ip, int port, std::string nick, std::string chan, std::string pass);
         ~IRCBot();
-        //copia y operator= que coñazo mi pana
             
         bool connectToServer();
         void sendRaw(std::string msg);
@@ -30,4 +36,8 @@ class IRCBot {
         void respondToMessage(const std::string& msg);
         std::string chooseResponse();
         void run();
+        void stop();
+        bool checkExitCommand(const std::string& msg);
 };
+
+#endif

@@ -46,7 +46,7 @@ ascii_art:
 		echo "██╔══╝     ██║        ██║██╔══██╗██║"; \
 		echo "██║        ██║███████╗██║██║  ██║╚██████╗"; \
 		echo "╚═╝        ╚═╝╚══════╝╚═╝╚═╝  ╚═╝ ╚═════╝"; \
-		printf "          BY JVIDAL-T , JAINABAS MRUBAL-C\033[0m\n"; \
+		printf "          BY JVIDAL-T , JAINAVAS MRUBAL-C\033[0m\n"; \
 		echo "$(YELLOW)\nCreating program...$(GREEN)"; \
 		i=0; \
 		while [ $$i -lt 20 ]; do \
