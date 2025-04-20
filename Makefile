@@ -6,7 +6,7 @@ DEBUG		=		0
 # Dependencies	
 INC_DIR		=		include
 INC         =       $(addprefix $(INC_DIR)/, \
-					Channel.hpp Client.hpp Command.hpp CommandHandler.hpp ft_irc.hp Replies.hpp Server.hpp )
+					Channel.hpp Client.hpp Command.hpp CommandHandler.hpp ft_irc.hpp Replies.hpp Server.hpp )
 
 # Sources
 SRC_DIR		=		src
@@ -34,7 +34,7 @@ LILLY		=		\033[0;35m
 NC			=		\033[0m # No color
 
 ############################################################################################################
-# Minishell Rules
+# FT_IRC Rules
 
 all: ascii_art
 
@@ -59,12 +59,12 @@ ascii_art:
 		echo "$(GREEN)[$(NAME)] is already up to date.$(NC)"; \
 	fi
 
-$(OBJ_DIR)/%.o:	$(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o:	$(SRC_DIR)/%.cpp $(INC)
 	@mkdir -p $(dir $@)
 	@echo -n "█"
 	@$(CC) $(CFLAGS) -I$(INC_DIR) -D DEBUG=$(DEBUG) -c $< -o $@
 
-$(NAME): $(OBJS) $(OBJ_DIR)
+$(NAME): $(OBJS)
 	@printf "$(NC)"
 	@$(CC) $(CFLAGS) -I$(INC_DIR) $(OBJS) -o $(NAME) && \
 	(printf "$(UGREEN)\n%s$(NC)" "[$(NAME)]"; printf "$(GREEN)%s$(NC)\n" "Compiled successfully.")
@@ -80,8 +80,7 @@ fclean: clean
 re:	fclean all
 
 debug: fclean
-	$(eval DEBUG=1)
 	$(MAKE) all DEBUG=1 -s
 
-.PHONY:	all clean fclean re debugflags debug
+.PHONY:	all clean fclean re debug
 ############################################################################################################
