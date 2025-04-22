@@ -47,47 +47,51 @@ void JoinCommand::execute(Client *client, std::vector<std::string> arguments)
 
 	// Get the channel by name. Create it if it does not exist.
 	Channel *channel = _server->getChannel(name);
-	if (!channel)
+	bool new_channel = false;
+	
+	if (!channel) {
 		channel = _server->createChannel(name, password, client);
+		new_channel = true;
+	}
 
 	// If the channel is invite-only, reject the join.
 	if (channel->invitOnlyChan())
 	{
 		client->reply(ERR_INVITEONLYCHAN(client->getNickName(), channel->getName()));
+		
+		// If this is a newly created channel and we're rejecting the join,
+		// we need to clean it up to prevent memory leaks
+		if (new_channel) {
+			_server->removeChannel(channel); // Use our new method to properly clean up the channel
+		}
 		return;
 	}
 
-	// Check if the client is already in the channel.
-	std::vector<Client *> clients = channel->getChanClients();
-	std::vector<Client *>::iterator it;
-
-	it = clients.begin();
-	while (it != clients.end())
-	{
-		Client *cl = it.operator*();
-		if (cl == client)
-			return;
-		it++;
-	}
+	// Check if the client is already in the channel - if so, nothing to do
+	if (channel->isInChannel(client))
+		return;
 
 	// Check if the channel is full.
 	if (channel->getMaxUsers() > 0 && channel->getNbrClients() >= channel->getMaxUsers())
 	{
 		client->reply(ERR_CHANNELISFULL(client->getNickName(), name));
+		
+		// Clean up empty channel if needed
+		if (new_channel) {
+			_server->removeChannel(channel); // Use our new method to properly clean up the channel
+		}
 		return;
 	}
 
 	// Check if the provided password matches the channel's password.
-	if (channel->getPassword() != password)
+	if (!channel->getPassword().empty() && channel->getPassword() != password)
 	{
 		client->reply(ERR_BADCHANNELKEY(client->getNickName(), name));
-		return;
-	}
-
-	// Additional check for invite-only status (redundant if already checked above).
-	if (channel->invitOnlyChan() == 1)
-	{
-		client->reply(ERR_INVITEONLYCHAN(client->getNickName(), name));
+		
+		// Clean up empty channel if needed
+		if (new_channel) {
+			_server->removeChannel(channel); // Use our new method to properly clean up the channel
+		}
 		return;
 	}
 

@@ -1,13 +1,38 @@
 #include "IRCBot.hpp"
 
+/**
+ * @brief Constructor for the IRCBot class.
+ *
+ * Initializes a new IRCBot instance with the specified server details, nickname,
+ * channel, and password for connection.
+ *
+ * @param ip The IP address of the IRC server to connect to.
+ * @param port The port number of the IRC server.
+ * @param nick The nickname for the bot to use on the IRC server.
+ * @param chan The channel name for the bot to join.
+ * @param pass The password for authentication with the IRC server.
+ */
 IRCBot::IRCBot(const std::string& ip, int port, const std::string& nick, const std::string& chan, const std::string& pass)
     : server_ip(ip), server_port(port), nickname(nick), channel(chan), sockfd(-1), password(pass), running(false) {}
 
+/**
+ * @brief Destructor for the IRCBot class.
+ *
+ * Ensures that the socket connection is properly closed when the bot is destroyed.
+ */
 IRCBot::~IRCBot() {
     if (sockfd != -1)
         close(sockfd);
 }
 
+/**
+ * @brief Establishes a connection to the IRC server.
+ *
+ * Creates a socket and attempts to connect to the IRC server using the
+ * IP address and port specified during initialization.
+ *
+ * @return bool Returns true if connection was successful, false otherwise.
+ */
 bool IRCBot::connectToServer() {
     std::cout << "Connecting to " << server_ip << ":" << server_port << std::endl;
 
@@ -32,11 +57,26 @@ bool IRCBot::connectToServer() {
     return true;
 }
 
+/**
+ * @brief Sends a raw message to the IRC server.
+ *
+ * Appends the necessary CR+LF to the message and sends it to the IRC server
+ * through the established socket connection.
+ *
+ * @param msg The message to be sent to the server.
+ */
 void IRCBot::sendRaw(const std::string& msg) {
     std::string message = msg + "\r\n";
     send(sockfd, message.c_str(), message.length(), 0);
 }
 
+/**
+ * @brief Registers with the IRC server and joins the specified channel.
+ *
+ * Sends the necessary NICK, USER, and PASS commands to authenticate with the server.
+ * After successful registration, joins the channel specified during initialization.
+ * Handles various registration responses from the server.
+ */
 void IRCBot::joinChannel() {
     std::cout << "Registering bot..." << std::endl;
 
@@ -81,6 +121,14 @@ void IRCBot::joinChannel() {
     }
 }
 
+/**
+ * @brief Handles PING requests from the IRC server.
+ *
+ * Detects PING messages from the server and responds with appropriate PONG messages
+ * to maintain the connection and prevent timeouts.
+ *
+ * @param msg The message received from the server to check for PING requests.
+ */
 void IRCBot::handlePing(const std::string& msg) {
     size_t pos = msg.find("PING :");
     if (pos != std::string::npos) {
@@ -89,12 +137,28 @@ void IRCBot::handlePing(const std::string& msg) {
     }
 }
 
+/**
+ * @brief Responds to messages in the channel.
+ *
+ * Checks if the received message is a PRIVMSG directed to the channel the bot is in.
+ * If it is, sends a random response to the channel.
+ *
+ * @param msg The message received from the server to respond to.
+ */
 void IRCBot::respondToMessage(const std::string& msg) {
     if (msg.find("PRIVMSG") != std::string::npos && msg.find(channel) != std::string::npos) {
         sendRaw("PRIVMSG " + channel + chooseResponse());
     }
 }
 
+/**
+ * @brief Selects a random response from a predefined list of programmer jokes.
+ *
+ * Generates a random number and returns one of several programming-related jokes
+ * to be used when responding to channel messages.
+ *
+ * @return std::string A randomly selected joke or message to send to the channel.
+ */
 std::string IRCBot::chooseResponse() {
     int ran = std::rand() % 10;
     switch (ran) {
@@ -112,6 +176,15 @@ std::string IRCBot::chooseResponse() {
     return "Null";
 }
 
+/**
+ * @brief Checks if an exit command has been received.
+ *
+ * Examines the given message for exit commands like "!exit" or "!quit",
+ * either from the IRC server or directed specifically to the bot.
+ *
+ * @param msg The message to check for exit commands.
+ * @return bool Returns true if an exit command is detected, false otherwise.
+ */
 bool IRCBot::checkExitCommand(const std::string& msg) {
     if (msg.find("!exit") != std::string::npos || 
         msg.find("!quit") != std::string::npos) {
@@ -130,6 +203,11 @@ bool IRCBot::checkExitCommand(const std::string& msg) {
     return false;
 }
 
+/**
+ * @brief Stops the bot's operation.
+ *
+ * Sets the running flag to false and closes the socket connection to the IRC server.
+ */
 void IRCBot::stop() {
     running = false;
     if (sockfd != -1) {
@@ -138,6 +216,14 @@ void IRCBot::stop() {
     }
 }
 
+/**
+ * @brief Main execution loop for the bot.
+ *
+ * Continuously monitors both the IRC socket and standard input for messages.
+ * Processes incoming server messages, responds to channel messages, and handles
+ * commands from the console. Runs until an exit command is detected or the 
+ * server disconnects.
+ */
 void IRCBot::run() {
     running = true;
     char buffer[512];

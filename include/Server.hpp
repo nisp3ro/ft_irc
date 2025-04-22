@@ -74,7 +74,9 @@ public:
 	// Channel
 	Channel*					getChannel(std::string const &name);
 	std::vector<Channel *>		getServChannels() const { return _channels; };
+	std::vector<Channel *>&		getServChannels() { return _channels; };
 	Channel* 					createChannel(std::string const &name, std::string const &password, Client *client);
+	bool						removeChannel(Channel *channel);
 };
 
 #endif

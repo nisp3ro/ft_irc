@@ -2,11 +2,15 @@
 # Variables
 NAME        = IRCBot
 
+# Directories
+SRCDIR      = src
+INCDIR      = include
+
 # Dependencies
-INCLUDE     = include
+INCLUDE     = $(INCDIR)
 
 # Sources
-SRCS        = main.cpp IRCBot.cpp
+SRCS        = $(SRCDIR)/main.cpp $(SRCDIR)/IRCBot.cpp
 
 # Objects
 OBJDIR      = objs

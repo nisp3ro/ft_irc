@@ -86,8 +86,23 @@ void Client::reply(const std::string &reply)
  */
 void Client::join(Channel *chan)
 {
-	chan->addClient(this);
-	_user_chans.push_back(chan);
+	// Only add to channel if not already in it
+	if (!chan->isInChannel(this)) {
+		chan->addClient(this);
+	}
+
+	// Only add to user_chans if not already there
+	bool already_in_user_chans = false;
+	for (std::vector<Channel *>::iterator it = _user_chans.begin(); it != _user_chans.end(); ++it) {
+		if (*it == chan) {
+			already_in_user_chans = true;
+			break;
+		}
+	}
+	
+	if (!already_in_user_chans) {
+		_user_chans.push_back(chan);
+	}
 
 	if (chan->getNbrClients() == 1)
 	{

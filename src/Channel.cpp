@@ -23,8 +23,14 @@ Channel::Channel(std::string const &name, std::string const &password, Client *a
  * @brief Channel destructor.
  *
  * Cleans up any resources used by the Channel instance.
+ * Ensures all vector memory is properly deallocated.
  */
-Channel::~Channel() {}
+Channel::~Channel() {
+    // Clear the client vectors but don't delete the Client objects
+    // as they are managed by the Server class
+    _clients.clear();
+    _oper_clients.clear();
+}
 
 /**
  * @brief Retrieves the nicknames of all clients in the channel.
@@ -136,6 +142,7 @@ int Channel::is_oper(Client *client)
  * Broadcasts a PART message to all channel members indicating the client's departure,
  * removes the client from both the operator list and the general client list, and calls the client's leave() method.
  * If the departing client is the admin and there are other clients remaining, the admin is reassigned.
+ * If the channel becomes empty, uses Server::removeChannel to clean up the channel properly.
  *
  * @param client Pointer to the client to remove.
  * @param reason A string containing the reason for the client leaving.
@@ -150,22 +157,33 @@ void Channel::removeClient(Client *client, std::string reason)
 		this->broadcast(RPL_PART_REASON(clientPrefix, this->getName(), reason));
 	reason.clear();
 
-	if (!_oper_clients.empty())
-		_oper_clients.erase(this->_oper_clients.begin() + this->_clientIndex(_oper_clients, client));
-	if (!_clients.empty())
-		_clients.erase(this->_clients.begin() + this->_clientIndex(_clients, client));
+	// Remove client from operator list if present
+	for (std::vector<Client *>::iterator it = _oper_clients.begin(); it != _oper_clients.end(); ++it) {
+		if (*it == client) {
+			_oper_clients.erase(it);
+			break;
+		}
+	}
+
+	// Remove client from clients list
+	for (std::vector<Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+		if (*it == client) {
+			_clients.erase(it);
+			break;
+		}
+	}
+
 	client->leave(this, 1, reason);
 
-	if (_clients.empty())
-	{
-		// free chan and remove it from server
+	// If channel is now empty, request its removal from the server
+	if (_clients.empty()) {
+		_server->removeChannel(this); // This will delete the channel object
 		return;
 	}
 
-	if (_admin == client)
-		_admin = _clients.begin().operator*();
-
-	// message to say that there is a new admin
+	// If the admin left, assign a new admin
+	if (_admin == client && !_clients.empty())
+		_admin = _clients[0];
 }
 
 /**
@@ -255,4 +273,36 @@ unsigned long Channel::_clientIndex(std::vector<Client *> clients, Client *clien
 		i++;
 	}
 	return 0;
+}
+
+/**
+ * @brief Adds a client to the channel.
+ *
+ * Adds a client to the channel's list of clients, ensuring proper memory management.
+ *
+ * @param client Pointer to the client to add.
+ */
+void Channel::addClient(Client *client) 
+{
+    if (!isInChannel(client)) {
+        _clients.push_back(client);
+    }
+}
+
+/**
+ * @brief Adds an operator to the channel.
+ *
+ * Adds a client to the channel's list of operators, ensuring proper memory management.
+ *
+ * @param client Pointer to the client to add as an operator.
+ */
+void Channel::addOper(Client *client) 
+{
+    // Check if client is already an operator
+    for (std::vector<Client *>::iterator it = _oper_clients.begin(); it != _oper_clients.end(); ++it) {
+        if (*it == client) {
+            return;  // Already an operator, nothing to do
+        }
+    }
+    _oper_clients.push_back(client);
 }

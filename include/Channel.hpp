@@ -66,8 +66,8 @@ public:
 	void 						broadcast(const std::string &message, Client *exclude);
 	void 						removeClient(Client *client, std::string reason);
 	void 						removeOper(Client *client);
-	void						addClient(Client *client) { _clients.push_back(client); };
-	void						addOper(Client *client) { _oper_clients.push_back(client); };
+	void						addClient(Client *client);
+	void						addOper(Client *client);
 	void						kick(Client *client, Client *target, std::string reason);
 	void						invit(Client *client, Client *target);
 	int 						is_oper(Client *client);

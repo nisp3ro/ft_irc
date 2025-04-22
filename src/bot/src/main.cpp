@@ -3,6 +3,14 @@
 #include <string>
 #include <limits>
 
+/**
+ * @brief Connects the bot with default configuration settings.
+ *
+ * Creates and initializes a bot instance with predefined parameters:
+ * nickname "Botito", channel "#general", password "1234", 
+ * and server at 127.0.0.1:6667. Attempts to connect to the server, 
+ * join the specified channel, and start the bot's operation.
+ */
 void connectDefault() {
     std::string nick = "Botito";
     std::string channel = "#general";
@@ -19,6 +27,14 @@ void connectDefault() {
     bot.run();
 }
 
+/**
+ * @brief Initializes a bot with user-specified configuration.
+ *
+ * Interactively prompts the user for configuration details including server IP/port,
+ * bot nickname, channel to join, and password. Validates each input and provides
+ * appropriate error messages. Allows the user to review and confirm the settings
+ * before attempting to connect. If connection fails, offers the opportunity to retry.
+ */
 void personalizedBot() {
     std::string nick, channel, password;
     std::string server_ip;
@@ -169,6 +185,15 @@ void personalizedBot() {
     }
 }
 
+/**
+ * @brief Main entry point for the IRC bot application.
+ *
+ * Initializes the random number generator for the bot's response selection.
+ * Displays a welcome message and presents a menu for the user to choose 
+ * between using default settings, customizing the bot, or exiting the program.
+ * 
+ * @return int Returns 0 on successful execution.
+ */
 int main() {
     std::srand(std::time(NULL));
     std::cout << "Welcome to the amazing useless bot v1.0! 🤖🔥" << std::endl;

@@ -237,6 +237,7 @@ void Server::listen(void)
 	if (::listen(this->_server_socket, 32) < 0)
 	{
 		std::cout << "Error: Can't listen on socket." << std::endl;
+		close(this->_server_socket);
 		return;
 	}
 
@@ -254,6 +255,9 @@ void Server::listen(void)
 	// Main loop: wait for socket activity until exitFlag becomes true.
 	while (exitFlag == false)
 		this->_waitActivity();
+		
+	// Close the server socket when exiting
+	close(this->_server_socket);
 }
 
 /**
@@ -336,24 +340,29 @@ void Server::_acceptConnection(void)
 void Server::_receiveData(Client *client)
 {
 	char buffer[BUFFER_SIZE + 1];
+    int client_fd = client->getFD(); // Store the FD separately to avoid use-after-free
+    std::vector<std::string> commands_to_process;
+    bool client_disconnected = false;
 
 	do {
 		// Receive data from the client's socket.
-		int ret = recv(client->getFD(), buffer, sizeof(buffer), 0);
+		int ret = recv(client_fd, buffer, sizeof(buffer), 0);
 		if (ret < 0)
 		{
 			// If the error is not due to no data being available (EWOULDBLOCK), remove the client.
 			if (errno != EWOULDBLOCK)
 			{
-				std::cout << "Error: recv() failed for fd " << client->getFD();
-				this->delClient(client->getFD());
+				std::cout << "Error: recv() failed for fd " << client_fd;
+				this->delClient(client_fd);
+				client_disconnected = true;
 			}
 			break;
 		}
 		else if (!ret)
 		{
 			// If no bytes were received, the connection has been closed.
-			this->delClient(client->getFD());
+			this->delClient(client_fd);
+			client_disconnected = true;
 			break;
 		}
 		else
@@ -362,24 +371,55 @@ void Server::_receiveData(Client *client)
 			buffer[ret] = '\0';
 			std::string buff = buffer;
 
-			// If the message ends with a newline, split the message into commands.
-			if (buff.at(buff.size() - 1) == '\n') {
-				std::vector<std::string> cmds = ft_split(client->getPartialRecv() + buff, '\n');
-				client->setPartialRecv("");
+            // Check if client still exists after receiving data
+            Client* current_client = this->getClient(client_fd);
+            if (!current_client) {
+                client_disconnected = true;
+                break;
+            }
 
-				// Process each command by passing it to the command handler.
-				for (std::vector<std::string>::iterator it = cmds.begin(); it != cmds.end(); it++)
-					this->_handleMessage(*it, client);
+			// If the message ends with a newline, split the message into commands.
+			if (buff.find('\n') != std::string::npos) {
+				std::vector<std::string> cmds = ft_split(current_client->getPartialRecv() + buff, '\n');
+				current_client->setPartialRecv("");
+                
+                // Collect commands for processing
+                for (std::vector<std::string>::iterator it = cmds.begin(); it != cmds.end(); ++it) {
+                    if (!it->empty()) {
+                        commands_to_process.push_back(*it);
+                    }
+                }
 			}
 			else
 			{
 				// If the data does not end with a newline, store it for the next read.
-				client->setPartialRecv(client->getPartialRecv() + buff);
-				if (debugFlag)
-					std::cout << "partial recv(" << client->getFD() << "): " << buff << std::endl;
+                Client* current_client = this->getClient(client_fd);
+                if (current_client) {
+                    current_client->setPartialRecv(current_client->getPartialRecv() + buff);
+                    if (debugFlag)
+                        std::cout << "partial recv(" << client_fd << "): " << buff << std::endl;
+                }
 			}
 		}
 	} while (TRUE);
+
+    // If client was disconnected, don't try to process commands
+    if (client_disconnected || commands_to_process.empty())
+        return;
+
+    // Process collected commands
+    Client* current_client = this->getClient(client_fd);
+    if (current_client) {
+        for (std::vector<std::string>::iterator it = commands_to_process.begin(); 
+             it != commands_to_process.end(); ++it) {
+            this->_handleMessage(*it, current_client);
+            
+            // Check if client still exists after each command
+            current_client = this->getClient(client_fd);
+            if (!current_client)
+                break;  // Client was deleted during message handling
+        }
+    }
 }
 
 /**
@@ -525,7 +565,11 @@ int Server::delClient(int socket)
 					this->_channels[chan]->removeClient(this->_clients[client], emptyString);
 			}
 
+			// Store the pointer for deletion after removing from vector
+			Client* client_to_delete = this->_clients[client];
 			this->_clients.erase(this->_clients.begin() + client);
+			// Delete the client to prevent memory leak
+			delete client_to_delete;
 			break;
 		}
 	}
@@ -625,8 +669,9 @@ Channel *Server::getChannel(const std::string &name)
  * @brief Creates a new channel.
  *
  * Allocates and initializes a new Channel object with the specified name and password.
- * The client creating the channel is also added as the first member (and typically the operator).
  * The new channel is then added to the server's list of channels.
+ * Note that the client is NOT added to the channel here - this should be done separately
+ * via client->join(channel) to ensure proper cross-referencing.
  *
  * @param name The name of the channel to create.
  * @param password The password for the channel.
@@ -713,4 +758,27 @@ std::vector<std::string> Server::getNickNames()
 		it++;
 	}
 	return nicknames;
+}
+
+/**
+ * @brief Removes a channel from the server.
+ *
+ * Searches for the channel in the server's channel list and removes it.
+ * Ensures proper deletion of the Channel object.
+ *
+ * @param channel Pointer to the Channel object to remove.
+ * @return bool True if the channel was found and removed, false otherwise.
+ */
+bool Server::removeChannel(Channel *channel)
+{
+    for (std::vector<Channel *>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    {
+        if (*it == channel)
+        {
+            _channels.erase(it);
+            delete channel;
+            return true;
+        }
+    }
+    return false;
 }
