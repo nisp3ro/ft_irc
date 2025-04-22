@@ -13,14 +13,14 @@ class Client;
 
 class CommandHandler
 {
-private:
-	Server *_server;
-	std::map<std::string, Command *> _commands;
-public:
-	CommandHandler(Server *server);
-	~CommandHandler();
+	private:
+		Server *_server;
+		std::map<std::string, Command *> _commands;
+	public:
+		CommandHandler(Server *server);
+		~CommandHandler();
 
-	void invoke(Client *client, std::string const &message);
+		void invoke(Client *client, std::string const &message);
 };
 
 #endif
