@@ -26,11 +26,11 @@ class IRCBot {
         bool running;
 
     public:
-        IRCBot(std::string ip, int port, std::string nick, std::string chan, std::string pass);
+        IRCBot(const std::string& ip, int port, const std::string& nick, const std::string& chan, const std::string& pass);
         ~IRCBot();
             
         bool connectToServer();
-        void sendRaw(std::string msg);
+        void sendRaw(const std::string& msg);
         void joinChannel();
         void handlePing(const std::string& msg);
         void respondToMessage(const std::string& msg);

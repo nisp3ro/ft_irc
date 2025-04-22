@@ -1,6 +1,6 @@
 #include "IRCBot.hpp"
 
-IRCBot::IRCBot(std::string ip, int port, std::string nick, std::string chan, std::string pass)
+IRCBot::IRCBot(const std::string& ip, int port, const std::string& nick, const std::string& chan, const std::string& pass)
     : server_ip(ip), server_port(port), nickname(nick), channel(chan), sockfd(-1), password(pass), running(false) {}
 
 IRCBot::~IRCBot() {
@@ -32,9 +32,9 @@ bool IRCBot::connectToServer() {
     return true;
 }
 
-void IRCBot::sendRaw(std::string msg) {
-    msg += "\r\n";
-    send(sockfd, msg.c_str(), msg.length(), 0);
+void IRCBot::sendRaw(const std::string& msg) {
+    std::string message = msg + "\r\n";
+    send(sockfd, message.c_str(), message.length(), 0);
 }
 
 void IRCBot::joinChannel() {
@@ -97,7 +97,6 @@ void IRCBot::respondToMessage(const std::string& msg) {
 
 std::string IRCBot::chooseResponse() {
     int ran = std::rand() % 10;
-    std::string resp;
     switch (ran) {
         case 0: return " : Why do programmers prefer dark mode? Because light attracts bugs!";
         case 1: return " : There are only 10 kinds of people in this world: those who understand binary and those who don't.";
@@ -134,7 +133,6 @@ bool IRCBot::checkExitCommand(const std::string& msg) {
 void IRCBot::stop() {
     running = false;
     if (sockfd != -1) {
-        sendRaw("QUIT :Bot shutting down");
         close(sockfd);
         sockfd = -1;
     }
