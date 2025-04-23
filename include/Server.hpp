@@ -50,6 +50,7 @@ class Server {
 	public:
 		Server(int port, std::string const &password);
 		Server(const Server &src);
+		~Server();
 
 		// Server
 		void			listen(void);
