@@ -43,7 +43,8 @@ ascii_art:
 		echo "██║██╔══██╗██║     ██╔══██╗██║   ██║   ██║"; \
 		echo "██║██║  ██║╚██████╗██████╔╝╚██████╔╝   ██║"; \
 		echo "╚═╝╚═╝  ╚═╝ ╚═════╝╚═════╝  ╚═════╝    ╚═╝"; \
-		printf "          IRC BOT ASSISTANT\033[0m\n"; \
+		printf "          IRC BOT ASSISTANT\n"; \
+		printf "     mrubal-c jvidal-t jainavas$(NC)"; \
 		echo "$(YELLOW)\nCreating bot program...$(GREEN)"; \
 		i=0; \
 		while [ $$i -lt 15 ]; do \
