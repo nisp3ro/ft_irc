@@ -147,6 +147,7 @@ void Server::listen(void)
 		
 	// Close the server socket when exiting
 	close(this->_server_socket);
+
 }
 
 /**

@@ -60,8 +60,10 @@ void ListCommand::execute(Client *client, std::vector<std::string> arguments)
 	for (unsigned long i = 0; i < chans.size(); i++)
 	{
 		// If no filter is provided or the channel's name is in the filter list, send the channel's info to the client.
-		if (arguments.empty() || isInChannelsList(chans[i], channelNames))
+		if ((arguments.empty() || isInChannelsList(chans[i], channelNames)) && chans[i]->getTopic() == "")
 			client->reply(RPL_LIST(client->getNickName(), chans[i]->getName(), intToString(chans[i]->getNbrClients()), "No topic is set"));
+		else if ((arguments.empty() || isInChannelsList(chans[i], channelNames)) && chans[i]->getTopic() != "")
+			client->reply(RPL_LIST(client->getNickName(), chans[i]->getName(), intToString(chans[i]->getNbrClients()), chans[i]->getTopic()));
 	}
 
 	// Send end-of-list reply to the client.

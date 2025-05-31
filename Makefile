@@ -1,7 +1,6 @@
 ############################################################################################################
 # Variables
 NAME		=		ircserv
-DEBUG		=		0
 
 # Dependencies	
 INC_DIR		=		include
@@ -69,18 +68,20 @@ $(NAME): $(OBJS)
 	@$(CC) $(CFLAGS) -I$(INC_DIR) $(OBJS) -o $(NAME) && \
 	(printf "$(UGREEN)\n%s$(NC)" "[$(NAME)]"; printf "$(GREEN)%s$(NC)\n" "Compiled successfully.")
 
+bonus:
+	@$(MAKE) -C ./src/bot
+
 clean:
 	@rm -rdf $(OBJ_DIR)
+	$(MAKE) -C ./src/bot clean
 	@printf "$(RED)%s$(NC)\n" "[ft_irc] Object files cleaned."
 
 fclean: clean
 	@rm -f $(NAME)
+	$(MAKE) -C ./src/bot fclean
 	@printf "$(RED)%s$(NC)\n" "[ft_irc] Cleaned successfully."
 
 re:	fclean all
 
-debug: fclean
-	$(MAKE) all DEBUG=1 -s
-
-.PHONY:	all clean fclean re debug
+.PHONY:	all clean fclean re bonus
 ############################################################################################################

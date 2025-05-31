@@ -18,7 +18,9 @@ Client::Client(Server *server, int fd, std::string const &hostname, int port)
 /**
  * @brief Destructor for the Client class.
  */
-Client::~Client() {}
+Client::~Client() {
+	close(this->_fd);
+}
 
 /**
  * @brief  Sends a message to the client by calling the server's send function with the message
@@ -116,8 +118,10 @@ void Client::join(Channel *chan)
 		users.append(*it + " ");
 
 	chan->broadcast(RPL_JOIN(getPrefix(), chan->getName()));
-
-	reply(RPL_NOTOPIC(this->getNickName(), chan->getName()));
+	if (chan->getTopic() != "")
+		reply(RPL_TOPIC(this->getNickName(), chan->getName(), chan->getTopic()));
+	else
+		reply(RPL_NOTOPIC(this->getNickName(), chan->getName()));
 	reply(RPL_NAMREPLY(this->getNickName(), chan->getName(), users));
 	reply(RPL_ENDOFNAMES(this->getNickName(), chan->getName()));
 }
